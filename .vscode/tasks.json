@@ -1,0 +1,52 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Standalone (Quick)",
+            "type": "shell",
+            "command": "cmake --build build --config Release --target AirQ4Mono_Standalone",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build All",
+            "type": "shell",
+            "command": "cmake --build build --config Release",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build & Run Standalone",
+            "type": "shell",
+            "command": "cmake --build build --config Release --target AirQ4Mono_Standalone && 'build/AirQ4Mono_artefacts/Release/Standalone/AirQ4 Mono.app/Contents/MacOS/AirQ4 Mono'",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean Build",
+            "type": "shell",
+            "command": "rm -rf build && cmake -B build -DCMAKE_BUILD_TYPE=Release",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
