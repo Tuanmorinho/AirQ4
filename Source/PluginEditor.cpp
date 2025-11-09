@@ -64,8 +64,46 @@ AirQ4AudioProcessorEditor::AirQ4AudioProcessorEditor(AirQ4AudioProcessor &p)
   sliderAirGain.setLookAndFeel(lookAirGainKnob.get());
 
   setupRotarySlider(sliderHighShelfAir);
-  sliderHighShelfAir.setRange(0.0, 1.0, 0.25); // Override: 5 positions for air freq
+  sliderHighShelfAir.setRange(0.0, 1.0,
+                              0.25); // Override: 5 positions for air freq
   sliderHighShelfAir.setLookAndFeel(lookAirFreqKnob.get());
+  sliderHighShelfAir.setValue(0.0); // Initial position
+
+  // Setup Signal Indicator (ON/OFF light)
+  auto signalImage =
+      juce::ImageCache::getFromMemory(BinaryData::signal_on_off_strip_png,
+                                      BinaryData::signal_on_off_strip_pngSize);
+  signalIndicator = std::make_unique<SignalIndicator>(signalImage, 2);
+  signalIndicator->setOn(!processor.isBypassed); // Sync with initial state
+  addAndMakeVisible(*signalIndicator);
+
+  // Setup On/Off button
+  auto btnOnOffImage = juce::ImageCache::getFromMemory(
+      BinaryData::btn_on_off_strip_png, BinaryData::btn_on_off_strip_pngSize);
+  lookOnOffButton = std::make_unique<FilmstripButtonLook>(btnOnOffImage, 2);
+  btnOnOff.setLookAndFeel(lookOnOffButton.get());
+  btnOnOff.setClickingTogglesState(true);
+  btnOnOff.setToggleState(!processor.isBypassed,
+                          juce::dontSendNotification); // ON by default
+  btnOnOff.onClick = [this]() {
+    bool isOn = btnOnOff.getToggleState();
+    processor.isBypassed = !isOn;
+    signalIndicator->setOn(isOn); // Sync indicator with button
+  };
+  addAndMakeVisible(btnOnOff);
+
+  // Setup Audio Level Indicator (signal_on_off_strip with opacity)
+  audioLevelIndicator = std::make_unique<AudioLevelIndicator>(signalImage, 2);
+  addAndMakeVisible(*audioLevelIndicator);
+
+  // Setup Peak Indicator (signal_peak_strip - separate position)
+  auto peakImage = juce::ImageCache::getFromMemory(
+      BinaryData::signal_peak_strip_png, BinaryData::signal_peak_strip_pngSize);
+  peakIndicator = std::make_unique<PeakIndicator>(peakImage, 2);
+  addAndMakeVisible(*peakIndicator);
+
+  // Start timer for updating audio level meters
+  startTimerHz(30);
 
   // Setup slider callbacks to update processor values
   sliderSubLowCut.onValueChange = [this]() {
@@ -146,13 +184,26 @@ void AirQ4AudioProcessorEditor::resized() {
   sliderLowShelf40Hz.setBounds(149, 91.5, knobSize, knobSize);
   sliderBell650Hz.setBounds(326, 91.5, knobSize, knobSize);
   sliderAirGain.setBounds(503.5, 91.5, knobSize, knobSize);
+
+  // On/Off button and indicators
+  btnOnOff.setBounds(83.9, 133, 40, 40);
+  signalIndicator->setBounds(59.9, 148, 10, 10);
+  peakIndicator->setBounds(670, 110, 10, 10);
+  audioLevelIndicator->setBounds(670, 148, 10, 10);
+}
+
+void AirQ4AudioProcessorEditor::timerCallback() {
+  // Update both audio level and peak indicators with current output level
+  float level = processor.getOutputLevel();
+  audioLevelIndicator->setLevel(level);
+  peakIndicator->setLevel(level);
 }
 
 void AirQ4AudioProcessorEditor::setupRotarySlider(juce::Slider &slider) {
   slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
   slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
   slider.setRange(0.0, 1.0, 0.05); // 21 positions: 0.00, 0.05, 0.10, ..., 1.00
-  slider.setValue(0.5); // Center position = 0dB
+  slider.setValue(0.5);            // Center position = 0dB
   slider.setDoubleClickReturnValue(true, 0.5);
   addAndMakeVisible(slider);
 }

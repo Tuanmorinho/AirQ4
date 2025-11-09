@@ -79,6 +79,10 @@ set(AIRQ4_SOURCES
     Source/modules/dsp/soft_saturator.cpp
     Source/modules/gui/RealisticKnobLook.h
     Source/modules/gui/RealisticKnobLook.cpp
+    Source/modules/gui/FilmstripButtonLook.h
+    Source/modules/gui/SignalIndicator.h
+    Source/modules/gui/AudioLevelIndicator.h
+    Source/modules/gui/PeakIndicator.h
     Source/PluginProcessor.cpp
     Source/PluginProcessor.h
     Source/PluginEditor.cpp

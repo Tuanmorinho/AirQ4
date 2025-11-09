@@ -2,11 +2,16 @@
 
 #include "PluginProcessor.h"
 #include "modules/gui/RealisticKnobLook.h"
+#include "modules/gui/FilmstripButtonLook.h"
+#include "modules/gui/SignalIndicator.h"
+#include "modules/gui/AudioLevelIndicator.h"
+#include "modules/gui/PeakIndicator.h"
 #include <juce_graphics/juce_graphics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 
-class AirQ4AudioProcessorEditor : public juce::AudioProcessorEditor {
+class AirQ4AudioProcessorEditor : public juce::AudioProcessorEditor,
+                                  private juce::Timer {
 public:
   AirQ4AudioProcessorEditor(AirQ4AudioProcessor &);
   ~AirQ4AudioProcessorEditor() override = default;
@@ -38,7 +43,15 @@ private:
   juce::Slider sliderAirGain;
   juce::Slider sliderHighShelfAir;
 
+  // On/Off button and indicators
+  std::unique_ptr<FilmstripButtonLook> lookOnOffButton;
+  juce::TextButton btnOnOff;
+  std::unique_ptr<SignalIndicator> signalIndicator;
+  std::unique_ptr<AudioLevelIndicator> audioLevelIndicator;
+  std::unique_ptr<PeakIndicator> peakIndicator;
+
   void setupRotarySlider(juce::Slider &slider);
+  void timerCallback() override;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AirQ4AudioProcessorEditor)
 };

@@ -54,16 +54,24 @@ public:
   juce::dsp::IIR::Filter<float> highShelfAirFilter;
 
   // Slider values 0→1
-  float sliderSubLowCut = 0.0f;
-  float sliderLowShelf40Hz = 0.0f;
-  float sliderBell160Hz = 0.0f;
-  float sliderBell650Hz = 0.0f;
-  float sliderBell2k5Hz = 0.0f;
-  float sliderAirGain = 0.0f;
+  float sliderSubLowCut = 0.5f;     // Default: center (0dB)
+  float sliderLowShelf40Hz = 0.5f;  // Default: center (0dB)
+  float sliderBell160Hz = 0.5f;     // Default: center (0dB)
+  float sliderBell650Hz = 0.5f;     // Default: center (0dB)
+  float sliderBell2k5Hz = 0.5f;     // Default: center (0dB)
+  float sliderAirGain = 0.0f;       // Default: 0dB
 
   // Air band freq selector (0-4 corresponding to knob positions)
-  // Index: 0=2.5kHz, 1=4kHz, 2=6kHz, 3=8kHz, 4=10kHz
-  int selectedAirFreqIndex = 3; // Default: 8kHz (index 3)
+  // Index: 0=OFF, 1=4kHz, 2=6kHz, 3=8kHz, 4=10kHz
+  int selectedAirFreqIndex = 0; // Default: OFF
+
+  // Bypass state
+  bool isBypassed = false; // Default: ON (not bypassed)
+
+  // Audio level metering
+  std::atomic<float> outputLevelDb{-60.0f}; // Output level in dB
+
+  float getOutputLevel() const { return outputLevelDb.load(); }
 
 private:
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AirQ4AudioProcessor)

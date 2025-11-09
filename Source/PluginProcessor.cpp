@@ -155,6 +155,24 @@ void AirQ4AudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
   juce::ScopedNoDenormals noDenormals;
 
+  // Calculate output level for metering (do this first, even when bypassed)
+  float rmsLevel = 0.0f;
+  for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
+    rmsLevel += buffer.getRMSLevel(channel, 0, buffer.getNumSamples());
+  }
+  rmsLevel /= static_cast<float>(buffer.getNumChannels());
+
+  // Convert to dB (with -60dB floor to avoid log(0))
+  float levelDb = rmsLevel > 0.00001f
+                      ? juce::Decibels::gainToDecibels(rmsLevel, -60.0f)
+                      : -60.0f;
+  outputLevelDb.store(levelDb);
+
+  // Bypass: pass audio through without processing
+  if (isBypassed) {
+    return;
+  }
+
   juce::dsp::AudioBlock<float> block(buffer);
   juce::dsp::ProcessContextReplacing<float> ctx(block);
 
@@ -190,8 +208,8 @@ void AirQ4AudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   auto [gainHS, qHS] = calcHighShelfAir(sliderAirGain);
 
   // Map Air Band frequency selector index to actual frequency
-  // Index: 0=2.5kHz, 1=4kHz, 2=6kHz, 3=8kHz, 4=10kHz
-  const float airFrequencies[5] = {2500.0f, 4000.0f, 6000.0f, 8000.0f,
+  // Index: 0=OFF (8kHz), 1=4kHz, 2=6kHz, 3=8kHz, 4=10kHz
+  const float airFrequencies[5] = {8000.0f, 4000.0f, 6000.0f, 8000.0f,
                                    10000.0f};
   float selectedAirFreq =
       airFrequencies[juce::jlimit(0, 4, selectedAirFreqIndex)];
