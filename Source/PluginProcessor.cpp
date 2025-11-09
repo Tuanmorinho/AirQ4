@@ -118,6 +118,11 @@ void AirQ4AudioProcessor::prepareToPlay(double sampleRate,
       juce::dsp::IIR::Coefficients<float>::makeHighShelf(
           sampleRate, HIGHSHELF_AIR_FREQ, HIGHSHELF_Q_MIN,
           juce::Decibels::decibelsToGain(0.0f));
+
+  // Prepare soft saturator
+  softSaturator.prepare(sampleRate, samplesPerBlock);
+  softSaturator.setDrive(saturatorDrive);
+  softSaturator.setMix(saturatorMix);
 }
 
 void AirQ4AudioProcessor::releaseResources() {
@@ -225,6 +230,11 @@ void AirQ4AudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   bell650HzFilter.process(ctx);
   bell2k5HzFilter.process(ctx);
   highShelfAirFilter.process(ctx);
+
+  // Apply soft saturation at the end for harmonic coloring
+  softSaturator.setDrive(saturatorDrive);
+  softSaturator.setMix(saturatorMix);
+  softSaturator.processBlock(buffer);
 }
 
 bool AirQ4AudioProcessor::hasEditor() const {

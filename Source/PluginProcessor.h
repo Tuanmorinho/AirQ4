@@ -3,6 +3,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
+#include "modules/dsp/soft_saturator.cpp"
 
 constexpr float SUB_LOW_CUT_FREQ = 25.0f;
 constexpr float LOWSHELF_FREQ = 40.0f;
@@ -73,6 +74,13 @@ public:
 
   float getOutputLevel() const { return outputLevelDb.load(); }
 
+  // Saturator parameters (0-1)
+  float saturatorDrive = 1.5f; // Default: moderate drive
+  float saturatorMix = 0.3f;   // Default: 30% wet
+
 private:
+  // Soft saturator for harmonic coloring
+  SoftSaturator softSaturator;
+
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AirQ4AudioProcessor)
 };

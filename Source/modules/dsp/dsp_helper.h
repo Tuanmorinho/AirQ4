@@ -37,7 +37,9 @@ inline float snapToStep(float val, float step = SLIDER_STEP)
 // Sub LowCut: chỉ Q
 inline float calcSubLowCutQ(float sliderVal)
 {
-    return snapToStep(SUB_Q_MIN + sliderVal * (SUB_Q_MAX - SUB_Q_MIN));
+    float result = snapToStep(SUB_Q_MIN + sliderVal * (SUB_Q_MAX - SUB_Q_MIN));
+    DBG("calcSubLowCutQ: sliderVal=" << sliderVal << " -> Q=" << result);
+    return result;
 }
 
 // LowShelf 40Hz: Q reversed, gain linear
@@ -45,6 +47,7 @@ inline std::pair<float,float> calcLowShelf40Hz(float sliderVal)
 {
     float gain = snapToStep(LOWSHELF_GAIN_MIN + sliderVal*(LOWSHELF_GAIN_MAX-LOWSHELF_GAIN_MIN));
     float Q    = snapToStep(LOWSHELF_Q_MAX - sliderVal*(LOWSHELF_Q_MAX-LOWSHELF_Q_MIN));
+    DBG("calcLowShelf40Hz: sliderVal=" << sliderVal << " -> gain=" << gain << ", Q=" << Q);
     return {gain, Q};
 }
 
@@ -53,6 +56,7 @@ inline std::pair<float,float> calcBell(float sliderVal)
 {
     float gain = snapToStep(BELL_GAIN_MIN + sliderVal*(BELL_GAIN_MAX-BELL_GAIN_MIN));
     float Q    = snapToStep(BELL_Q_MAX - (gain-BELL_GAIN_MIN)/(BELL_GAIN_MAX-BELL_GAIN_MIN)*(BELL_Q_MAX-BELL_Q_MIN)*0.2f);
+    DBG("calcBell: sliderVal=" << sliderVal << " -> gain=" << gain << ", Q=" << Q);
     return {gain, Q};
 }
 
@@ -61,5 +65,6 @@ inline std::pair<float,float> calcHighShelfAir(float sliderVal)
 {
     float gain = snapToStep(HIGHSHELF_GAIN_MIN + sliderVal*(HIGHSHELF_GAIN_MAX-HIGHSHELF_GAIN_MIN));
     float Q    = snapToStep(HIGHSHELF_Q_MIN + (gain/(HIGHSHELF_GAIN_MAX-HIGHSHELF_GAIN_MIN))*(HIGHSHELF_Q_MAX-HIGHSHELF_Q_MIN)*0.2f);
+    DBG("calcHighShelfAir: sliderVal=" << sliderVal << " -> gain=" << gain << ", Q=" << Q);
     return {gain, Q};
 }
