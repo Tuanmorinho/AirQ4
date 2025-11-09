@@ -1,0 +1,8 @@
+# Thư mục cấu hình VS Code
+.vscode/
+
+# Thư mục build output (tạo ra khi compile)
+build/
+
+# Thư mục JUCE (nếu bạn không muốn commit toàn bộ SDK hoặc module của JUCE)
+JUCE/
