@@ -143,34 +143,63 @@ void AirQ4AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     juce::ignoreUnused (midiMessages);
 
     juce::ScopedNoDenormals noDenormals;
+    
+    // Track peak level trước khi xử lý
+    float peakLevel = 0.0f;
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+    {
+        peakLevel = juce::jmax(peakLevel, buffer.getMagnitude(ch, 0, buffer.getNumSamples()));
+    }
+    currentPeakLevel.store(peakLevel);
+
+    // Nếu bypass, không làm gì cả
+    if (isBypassed.load())
+        return;
 
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::ProcessContextReplacing<float> ctx(block);
 
+    // Sub Low Cut
     float Qsub = calcSubLowCutQ(sliderSubLowCut);
-    subLowCut25HzFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(getSampleRate(), SUB_LOW_CUT_FREQ, Qsub);
+    subLowCut25HzFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(
+        getSampleRate(), SUB_LOW_CUT_FREQ, Qsub);
 
+    // Low Shelf 40Hz
     auto [gainLS, qLS] = calcLowShelf40Hz(sliderLowShelf40Hz);
-    lowShelf40HzFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeLowShelf(getSampleRate(), LOWSHELF_FREQ, qLS, juce::Decibels::decibelsToGain(gainLS));
+    lowShelf40HzFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeLowShelf(
+        getSampleRate(), LOWSHELF_FREQ, qLS, juce::Decibels::decibelsToGain(gainLS));
 
+    // Bell 160Hz
     auto [gain160, q160] = calcBell(sliderBell160Hz);
-    bell160HzFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), BELL1_FREQ, q160, juce::Decibels::decibelsToGain(gain160));
+    bell160HzFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
+        getSampleRate(), BELL1_FREQ, q160, juce::Decibels::decibelsToGain(gain160));
 
+    // Bell 650Hz
     auto [gain650, q650] = calcBell(sliderBell650Hz);
-    bell650HzFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), BELL2_FREQ, q650, juce::Decibels::decibelsToGain(gain650));
+    bell650HzFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
+        getSampleRate(), BELL2_FREQ, q650, juce::Decibels::decibelsToGain(gain650));
 
+    // Bell 2.5kHz
     auto [gain2k5, q2k5] = calcBell(sliderBell2k5Hz);
-    bell2k5HzFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), BELL3_FREQ, q2k5, juce::Decibels::decibelsToGain(gain2k5));
+    bell2k5HzFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
+        getSampleRate(), BELL3_FREQ, q2k5, juce::Decibels::decibelsToGain(gain2k5));
 
-    auto [gainHS, qHS] = calcHighShelfAir(sliderHighShelfAir);
-    highShelfAirFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighShelf(getSampleRate(), selectedAirFreq, qHS, juce::Decibels::decibelsToGain(gainHS));
-
+    // Process các filters cơ bản
     subLowCut25HzFilter.process(ctx);
     lowShelf40HzFilter.process(ctx);
     bell160HzFilter.process(ctx);
     bell650HzFilter.process(ctx);
     bell2k5HzFilter.process(ctx);
-    highShelfAirFilter.process(ctx);
+
+    // High Shelf Air - CHỈ process khi KHÔNG OFF (selectedAirFreq > 0)
+    if (selectedAirFreq > 0.0f)
+    {
+        auto [gainHS, qHS] = calcHighShelfAir(sliderHighShelfAir);
+        highShelfAirFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighShelf(
+            getSampleRate(), selectedAirFreq, qHS, juce::Decibels::decibelsToGain(gainHS));
+        
+        highShelfAirFilter.process(ctx);
+    }
 }
 
 bool AirQ4AudioProcessor::hasEditor() const
