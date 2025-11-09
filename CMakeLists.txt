@@ -5,7 +5,21 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_subdirectory(JUCE)
+set(CPM_DOWNLOAD_VERSION 0.34.0)
+set(CPM_DOWNLOAD_LOCATION "${CMAKE_BINARY_DIR}/cmake/CPM_${CPM_DOWNLOAD_VERSION}.cmake")
+
+if (NOT EXISTS ${CPM_DOWNLOAD_LOCATION})
+    message(STATUS "Downloading CPM.cmake to ${CPM_DOWNLOAD_LOCATION}")
+    file(DOWNLOAD https://github.com/cpm-cmake/CPM.cmake/releases/download/v${CPM_DOWNLOAD_VERSION}/CPM.cmake ${CPM_DOWNLOAD_LOCATION})
+endif ()
+
+include(${CPM_DOWNLOAD_LOCATION})
+
+CPMAddPackage(
+    NAME juce
+    GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
+    GIT_TAG origin/master
+)
 
 juce_add_binary_data(BinaryData SOURCES
     Assets/background.png
@@ -17,8 +31,8 @@ juce_add_binary_data(BinaryData SOURCES
     Assets/160_knob_strip.png
     Assets/650_knob_strip.png
     Assets/2k5_knob_strip.png
-    Assets/air_gain_strip.png
-    Assets/air_knob_strip.png
+    Assets/air_gain_knob_strip.png
+    Assets/air_knot_strip.png
 )
 
 # =====================================================
@@ -36,7 +50,7 @@ juce_add_plugin(AirQ4Mono
     PLUGIN_MANUFACTURER_CODE "TAud"
     PLUGIN_CODE "AQ4M"                # 🔹 mã riêng cho Mono
     FORMATS VST3 AU Standalone
-    PRODUCT_NAME "AirQ4 (Mono)"
+    PRODUCT_NAME "AirQ4 Mono"
 )
 
 # =====================================================
@@ -54,7 +68,7 @@ juce_add_plugin(AirQ4Stereo
     PLUGIN_MANUFACTURER_CODE "TAud"
     PLUGIN_CODE "AQ4S"                # 🔹 mã riêng cho Stereo
     FORMATS VST3 AU Standalone
-    PRODUCT_NAME "AirQ4 (Stereo)"
+    PRODUCT_NAME "AirQ4 Stereo"
 )
 
 # =====================================================
@@ -63,6 +77,8 @@ juce_add_plugin(AirQ4Stereo
 set(AIRQ4_SOURCES
     Source/modules/dsp/dsp_helper.h
     Source/modules/dsp/soft_saturator.cpp
+    Source/modules/gui/RealisticKnobLook.h
+    Source/modules/gui/RealisticKnobLook.cpp
     Source/PluginProcessor.cpp
     Source/PluginProcessor.h
     Source/PluginEditor.cpp
